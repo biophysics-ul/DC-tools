@@ -10,6 +10,22 @@ This module offers functions for ML-based model training and image classificatio
 It is independent of DC (and dc_tools.py) and works with images stored in ZIP files.
 Machine learning is based on PyTorch and can utilize a GPU.
 
+## Usage  
+
+Just download the modules to the same folder as your script, import the desired module, and you're ready to go.
+
+
+- If you want to work with RTDC files, you need to install [**dclab**](https://github.com/DC-analysis/dclab).
+
+- To use GPU acceleration with ml_tools.py, make sure CUDA is installed and properly configured.
+
+More detailed information is available in the module-specific README files: 
+- [README.dc_tools](README.dc_tools.md)
+- [README.ml_tools](README.ml_tools.md)
+
+
+
+
 ---
 **Authors:**  
 Darin Lah  
