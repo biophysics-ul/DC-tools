@@ -12,6 +12,6 @@ To use this project, you need the following Python packages:
 
 `extract_events_from_raw_rtdc_to_zip(rtdc_path, zip_path)`
 
-**Description:** Extracts images with events and their timestamps from a raw (non-filtered) RTDC format to ZIP archive.
+**Description:** Extracts images with events and their timestamps from a raw (non-filtered) RTDC file into a ZIP archive.
 
-Images with events are those which, upon background subtraction, have signal-to-noise (SNR) ratio above predefined threshols. 
+Images with events are those that, after background subtraction, have a signal-to-noise ratio (SNR) above a predefined threshold.
