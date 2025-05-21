@@ -33,7 +33,7 @@ Additional information about the scripts is included in the scripts themselves.
 
 ## Installation
 
-Installing Python packages and modules can be tricky for newcomers. This process worked well for us:
+For us, this process worked well:
 
 - Create a new Python environment  
 - Go to [https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/locally/), select your system configuration, copy the installation command, and run it in your console  
@@ -52,6 +52,18 @@ Installing Python packages and modules can be tricky for newcomers. This process
 If you won't use `dc_tools.py`, you can skip installing `dclab`.  
 If you won't use `ml_tools.py`, you can skip `torch` and `torchvision`.  
 
+The versions that worked for us:
+```
+numpy         2.2.6
+opencv-python 4.11.0.86
+dclab         0.64.0
+tqdm          4.67.1
+matplotlib    3.10.3
+scikit-learn  1.6.1
+seaborn       0.13.2
+torch         2.7.0+cu126
+torchvision   0.22.0+cu126
+```
 
 ---
 
