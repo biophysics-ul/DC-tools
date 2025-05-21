@@ -2,7 +2,7 @@
 
 Some additional info for the module `ml_tools.py`.
 
-### Dependencies
+### Dependencies and 
 
 To use this project, you need the following Python packages:  
 `numpy` >=1.21.0
@@ -18,11 +18,43 @@ To use this project, you need the following Python packages:
 `seaborn`
 `h5py`
   
+
+pip install opencv-python
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+pip install dclab
+pip install tqdm
+pip install matplotlib
+pip install scikit-learn
+pip install seaborn
+
+
+
+pip install torch==2.0.1 torchvision==0.8.0 --index-url https://download.pytorch.org/whl/cu121
+
+https://pytorch.org/get-started/locally/
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+
+
 ### Overview
 The `ml_tools.py` module is designed to streamline the process of image classification in flow cytometry and other biological research. The key functionalities include:
 1. Image Processing: Image processing and augmentation techniques before training
 2. Model Training: Train a modified ResNet18 model with user-defined hyperparameters
 3. Classification: Use the trained model to classify images and save the results. 
+
+TrainingSet.zip
+├── class1/
+│   ├── image001.tif
+│   ├── image002.tif
+│   └── ...
+├── class2/
+│   ├── image001.tif
+│   ├── image002.tif
+│   └── ...
+├── class3/
+│   ├── image001.tif
+│   ├── image002.tif
+│   └── ...
+└── ...
 
 
 ### Functions
@@ -48,6 +80,9 @@ The train_model function includes several key parameters that can be modified fo
 Parameters:
 - `doublechannel`: Set to True if processing doublechannel images. This activates background subtraction during segmentation.
 - `extra_pixels`: Defines additional padding around objects during segmentation.
+
+
+
 
 ## Conclusion
 The `ml_tools.py` module provides a comprehensive framework for cell image classification. By following the provided instructions, users can effectively train models and classify images to support their research needs. Adjusting the parameters allows for fine-tuning the model to specific datasets, enhancing performance and accuracy.

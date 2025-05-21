@@ -1,34 +1,62 @@
 # DC-tools
-Custom Python tools for Deformability Cytometry (DC).  
-These tools are designed for **reusability** rather than speed. 
-The repository contains two main modules:
-### `dc_tools.py`
-This module provides functions for working with and analyzing DC images. It supports images stored in a ZIP file or images stored in a RTDC format. For the latter, it uses [**dclab**](https://github.com/DC-analysis/dclab).
 
-### `ml_tools.py`
-This module offers functions for ML-based model training and image classification.
-It is independent of DC (and `dc_tools.py`) and works with images stored in ZIP files.
-Machine learning is based on PyTorch and can utilize a GPU.
+Custom Python tools for Deformability Cytometry (DC), developed at the Institute of Biophysics, Faculty of Medicine, University of Ljubljana.  
+These tools are designed for reusability rather than speed.  
+The repository contains two main modules and some useful scripts:
 
-## Usage  
+### 1. Module `dc_tools.py`
+This module provides functions for working with and analyzing DC images. It supports images stored in ZIP files or in the RTDC format. For the latter, it uses [**dclab**](https://github.com/DC-analysis/dclab).
 
-Just download the modules, make sure they're in the same folder as your script, and you're ready to go. 
+### 2. Module `ml_tools.py`
+This module offers functions for ML-based model training and image classification.  
+It is **independent of DC** (and `dc_tools.py`) and works with any images stored in ZIP files.  
+Machine learning is based on PyTorch and can utilize a GPU. To use GPU acceleration, make sure CUDA is installed and properly configured.
 
+### 3. Useful scripts
+Some useful scripts and examples are in the `Scripts` folder:
+- `rtdc_ImageViewer`: Script for previewing images in RTDC files
+- `zip_ImageViewer`: Script for previewing images in ZIP files
+- `ml_tools_example_script`: Script with a complete ML workflow example (model training & image classification)
 
-- If you want to work with RTDC files, you need to install [**dclab**](https://github.com/DC-analysis/dclab).
+## Usage
 
-- To use GPU acceleration with ml_tools.py, make sure CUDA is installed and properly configured.
+- Install the required packages (see below)
+- Download the files, make sure the modules are in the same folder as your script, and you're ready to go!
 
-More detailed information is available in the module-specific README files: 
+Additional information about the modules is available in the module-specific README files:
 - [README.dc_tools](README.dc_tools.md)
 - [README.ml_tools](README.ml_tools.md)
 
+Additional information about the scripts is included in the scripts themselves.
 
+
+
+## Installation
+
+Installing Python packages and modules can be tricky for newcomers. This process worked well for us:
+
+- Create a new Python environment  
+- Go to [https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/locally/), select your system configuration, copy the installation command, and run it in your console  
+- For our configuration, the correct command was:
+
+```
+    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+```
+
+- Then install the remaining packages:
+
+```
+    pip install numpy opencv-python dclab tqdm matplotlib scikit-learn seaborn
+```
+
+If you won't use `dc_tools.py`, you can skip installing `dclab`.  
+If you won't use `ml_tools.py`, you can skip `torch` and `torchvision`.  
 
 
 ---
+
 **Authors:**  
 Darin Lah  
 Bor Ivanuš  
 Jure Derganc  
-Institute of Biophysics, Faculty of Medicine, University of Ljubljana  
+Institute of Biophysics, Faculty of Medicine, University of Ljubljana

@@ -10,17 +10,33 @@ import tkinter
 from tkinter import filedialog
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-from torchvision.transforms import functional as F
+from torchvision import transforms
+#from torchvision.transforms import functional as F
+import torch.nn.functional as F
 from PIL import Image
 from tqdm import tqdm
-import torch
 import zipfile
+import torch.nn as nn
+import torch.optim as optim
+from torchvision import models
+from torch.utils.data.dataset import random_split
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+import matplotlib.pyplot as plt
+from collections import Counter
+import datetime
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+import random
+from collections import defaultdict
+
+
+IMG_EXT=".tif"
+EPOCHS = 30
 
 class DataTransforms:
-    def __init__(self, image_folder_path, batch_size=64, num_workers=0):
+    def __init__(self, image_folder_path, batch_size =64, num_workers=0):
         self.image_folder_path = image_folder_path
-        self.batch_size = batch_size
+        self.batch_size  = batch_size 
         self.num_workers = num_workers
         self.mean = None
         self.std = None
@@ -40,7 +56,7 @@ class DataTransforms:
             image_folder_path=self.image_folder_path,
             transform=transform,
         )
-        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
+        loader = DataLoader(dataset, batch_size =self.batch_size , shuffle=False, num_workers=self.num_workers)
 
         # Initialize variables to calculate mean and std
         mean = 0.0
@@ -107,7 +123,7 @@ class SegmentedImages(Dataset):
         # Read from zip file
         self.zip_file = zipfile.ZipFile(image_folder_path, 'r')
         for file in self.zip_file.namelist():
-            if file.endswith('.tif'):
+            if file.endswith(IMG_EXT):
                 label = file.split('/')[0]
                 self.image_files.append((file, label))
                 if label not in self.labels:
@@ -152,7 +168,7 @@ class UnlabeledImages(Dataset):
     def __init__(self, image_zip_path, transform=None):
         self.zip_path = image_zip_path
         self.zip_file = zipfile.ZipFile(self.zip_path, 'r')
-        self.image_files = [f for f in self.zip_file.namelist() if f.endswith('.tif')]
+        self.image_files = [f for f in self.zip_file.namelist() if f.endswith(IMG_EXT)]
         self.transform = transform
 
     def normalize_image(self, image):
@@ -205,7 +221,7 @@ def load_model(model_path=None):
     # Extract labels
     parts = model_name.split('_')
     try:
-        start_index = parts.index("RN") + 1
+        start_index = parts.index("classes") + 1
         labels = parts[start_index:]
     except ValueError:
         labels = []
@@ -285,24 +301,6 @@ def choose_image_folder():
     print("Chosen image folder:", image_folder)
     return image_folder
 
-def choose_image_folder_nozip():
-    root = tkinter.Tk()
-    root.attributes("-topmost", True)
-    root.withdraw()
-    image_file_path = filedialog.askopenfilename(title="Please select the first image in desired folder.", filetypes=[("Image files", ".tif")])
-    image_folder = os.path.dirname(image_file_path)
-    root.destroy()
-    print("Chosen image folder:", image_folder)
-    return image_folder
-
-def choose_results_folder():
-    root = tkinter.Tk()
-    root.attributes("-topmost", True)
-    root.withdraw()
-    image_folder = filedialog.askdirectory(title="Please select the folder you wish to save your results to.")
-    root.destroy()
-    print("Results will be saved in:", image_folder)
-    return image_folder
 
 def get_labels(image_folder_path):
     labels = []
@@ -318,38 +316,15 @@ def get_labels(image_folder_path):
     print("Labels:", labels)
     return labels
 
-def check_zip_compression(zip_path):
-        with zipfile.ZipFile(zip_path, 'r') as z:
-            for zinfo in z.infolist():
-                print(f"{zinfo.filename}: compress_type={zinfo.compress_type}")
-
 '''
 2. Training
 '''
-import os
-import tkinter
-from tkinter import filedialog
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torchvision import models
-from torch.utils.data import DataLoader
-from torch.utils.data.dataset import random_split
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-import matplotlib.pyplot as plt
-import pickle
-from collections import Counter
-from tqdm import tqdm
-import datetime
-import zipfile
-from sklearn.metrics import confusion_matrix
-import seaborn as sns
 
 def train_model(image_folder_path, results_folder):
     # Validation split (0.5-1)
     val_split = 0.8
-    batch_size = 64
-    epochs = 10
+    batch_size  = 64
+    epochs = EPOCHS
     # Patience for early stopping
     patience_total = 100
     model_choice = "resnet"
@@ -359,9 +334,9 @@ def train_model(image_folder_path, results_folder):
     
     current_date = datetime.datetime.now()
     date_str = current_date.strftime("%Y_%m_%d")
-    sorted_labels = sorted(get_labels(image_folder_path))
+    sorted_labels = get_labels(image_folder_path)#sorted(get_labels(image_folder_path))
     label_str = '_'.join(sorted_labels)
-    model_name = f"{date_str}_M1_RN_{label_str}"
+    model_name = f"ml_model_{date_str}_classes_{label_str}"
     results_folder_path = results_folder + '/Models/' + model_name
 
     if not os.path.exists(results_folder_path):
@@ -401,13 +376,12 @@ def train_model(image_folder_path, results_folder):
     with zipfile.ZipFile(image_folder_path, 'r') as zip_file:
         # Get the list of all files and folders in the zip file
         all_files = zip_file.namelist()
-
         labels = set()
         for file in all_files:
             if '/' in file:
                 labels.add(file.split('/')[0])
 
-        sorted_labels = sorted(labels)
+        sorted_labels = get_labels(image_folder_path)# sorted(labels)
 
         # Count the number of files in each subfolder
         label_freq = Counter()
@@ -454,8 +428,8 @@ def train_model(image_folder_path, results_folder):
     train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
 
     # Create dataloader
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, drop_last=False, shuffle=True)
-    validation_dataloader = DataLoader(val_dataset, batch_size=batch_size, drop_last=False)
+    train_dataloader = DataLoader(train_dataset, batch_size =batch_size , drop_last=False, shuffle=True)
+    validation_dataloader = DataLoader(val_dataset, batch_size = batch_size , drop_last=False)
 
     train_losses = []
     val_losses = []
@@ -504,7 +478,7 @@ def train_model(image_folder_path, results_folder):
         epoch_data = [t+1, train_loss, val_loss, train_accuracy, val_accuracy] + train_label_acc + val_label_acc
         collected_data.append(epoch_data)
 
-        epoch_model_path = os.path.join(models_folder_path, f"{model_name}_epoch_{t+1}")
+        epoch_model_path = os.path.join(models_folder_path, f"{model_name}_epoch_{t+1}.pt")
         # Convert the model to TorchScript
         scripted_model = torch.jit.script(model)
         # Save the entire model (architecture + weights); this already forces it to .eval() by default.
@@ -524,7 +498,7 @@ def train_model(image_folder_path, results_folder):
 
     plt.figure(figsize=(10, 8))
     sns.heatmap(final_conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=sorted_labels, yticklabels=sorted_labels)
-    plt.title(f'Confusion Matrix')
+    plt.title('Confusion Matrix')
     plt.xlabel('Predicted Label')
     plt.ylabel('True Label')
     plt.savefig(os.path.join(results_folder_path, f"{model_name}_conf_matrix_last_epoch.png"))
@@ -604,10 +578,10 @@ def train_model(image_folder_path, results_folder):
     # Convert the model to TorchScript
     scripted_model = torch.jit.script(model)
     # Save the entire model (architecture + weights); this already forces it to .eval() by default.
-    torch.jit.save(scripted_model, results_folder_path + '/' + model_name)
+    torch.jit.save(scripted_model, results_folder_path + '/' + model_name+".pt")
 
     # Check if it saved correctly
-    loaded_scripted_model = torch.jit.load(results_folder_path + '/' + model_name)
+    loaded_scripted_model = torch.jit.load(results_folder_path + '/' + model_name+".pt")
 
     # Comparing models
     def compare_models(model1, model2):
@@ -784,125 +758,83 @@ def write_confusion_matrices_to_file(results_folder_path, model_name, confusion_
 3. Inference
 '''
 
-import torch
-import os
-from torch.utils.data import DataLoader
-import torch.nn.functional as F
-import numpy as np
-import cv2 as cv
-from tqdm import tqdm
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
-import zipfile
-import re
-
-
-
-def inference(image_folder, results_folder, model, labels, device):
+def classify_images(input_image_folder, model_path, output_data_file_path):
     # Create dataset and dataloader
-    experiment_folder_path = os.path.dirname(image_folder) 
-    experiment_name = os.path.basename(experiment_folder_path)
-    results_folder_path = results_folder + '/' + experiment_name
-    label_str = '_'.join(labels)
-
-    with zipfile.ZipFile(image_folder, 'r') as zip_file:
-        # Compute mean and std using DataTransforms class
-        data_transforms_instance = DataTransforms(image_folder)
-        data_transforms = data_transforms_instance.get_transforms(train_ok=False)
-
-        unlabeled_dataset = UnlabeledImages(image_folder, transform = data_transforms['eval'])
-        unlabeled_dataloader = DataLoader(unlabeled_dataset, batch_size = 64, collate_fn=custom_collate)
-
-        ###Inference###
-        inference_results = []
-
-        # Calculate the total number of batches
-        total_batches = len(unlabeled_dataloader)
-
-        # Infer the labels for the unlabelled images and update the box list. Track updates with tqdm.
-        for images, img_names in tqdm(unlabeled_dataloader, total=total_batches, desc='Inference'):
-            # Move the batch of images to the device
-            images = images.to(device)
-            with torch.no_grad():
-                # Forward pass for the whole batch
-                outputs = model(images)
-                probs = F.softmax(outputs, dim=1)
-                confidences, preds = torch.max(probs, 1)
-
-            # Loop through the batch to update the boxes
-            for i in range(len(preds)):
-                inference_results.append({
-                "image_name": img_names[i],
-                "n": 0,
-                "label": labels[preds[i].item()],
-                "confidence": confidences[i].item()
-                })
-
-
-    save_classified_images(image_folder, results_folder, inference_results, labels)
-    save_classification_metrics(image_folder, results_folder,inference_results, labels)
-
-
-
-def save_classified_images(image_folder, results_folder, inference_results, labels):
-    experiment_folder_path = os.path.dirname(image_folder) 
-    experiment_name = os.path.basename(experiment_folder_path)
-    results_folder_path = results_folder + '/' + experiment_name
-    label_str = '_'.join(labels)
-    classified_images_path = results_folder_path + '/class_imgs_' + experiment_name + '_' + label_str
-
-    if not os.path.exists(classified_images_path):
-        os.makedirs(classified_images_path)
-
-    for label in labels:
-        if not os.path.exists(f"{classified_images_path}/{label}"):
-            os.makedirs(f"{classified_images_path}/{label}")
-
-    label_counts = {label: 0 for label in labels}
-
-    with zipfile.ZipFile(image_folder, 'r') as zip_file:
-        for cell in tqdm(inference_results, desc='Saving images'):
-            with zip_file.open(cell["image_name"]) as image_file:
-                file_data = image_file.read()
-                file_bytes = np.frombuffer(file_data, np.uint8)
-                raw_image = cv.imdecode(file_bytes, cv.IMREAD_UNCHANGED)
-                
-                if raw_image is None:
-                    print(f"Warning: Could not read image {cell['image_name']}")
-                    continue
-
-                output_file_name = cell["image_name"]
-                output_path = os.path.join(classified_images_path, cell["label"], output_file_name)
-
-                if not cv.imwrite(output_path, raw_image):
-                    raise Exception(f"Could not write image to {output_path}")  # imwrite fails silently, this makes it loud.
+    # Compute mean and std using DataTransforms class
     
-                label = cell['label']
-                label_counts[label] += 1
+    model, labels, device = load_model(model_path)
+    
+    data_transforms_instance = DataTransforms(input_image_folder)
+    data_transforms = data_transforms_instance.get_transforms(train_ok=False)
+    
+    unlabeled_dataset = UnlabeledImages(input_image_folder, transform = data_transforms['eval'])
+    unlabeled_dataloader = DataLoader(unlabeled_dataset, batch_size  = 64, collate_fn=custom_collate)
+    
+    ###Inference###
+    inference_results = []
+    
+    # Calculate the total number of batches
+    total_batches = len(unlabeled_dataloader)
+    
+    # Infer the labels for the unlabelled images and update the box list. Track updates with tqdm.
+    for images, img_names in tqdm(unlabeled_dataloader, total=total_batches, desc='Inference'):
+        # Move the batch of images to the device
+        images = images.to(device)
+        with torch.no_grad():
+            # Forward pass for the whole batch
+            outputs = model(images)
+            probs = F.softmax(outputs, dim=1)
+            confidences, preds = torch.max(probs, 1)
+    
+        # Loop through the batch to update the boxes
+        for i in range(len(preds)):
+            inference_results.append({
+            "image_name": img_names[i],
+            "n": 0,
+            "label": labels[preds[i].item()],
+            "confidence": confidences[i].item()
+            })
 
-    print("Images saved.")
+    save_classification_data(output_data_file_path,inference_results, labels)
 
-def save_classification_metrics(image_folder, results_folder, inference_results, labels=False):
-    experiment_folder_path = os.path.dirname(image_folder) 
-    experiment_name = os.path.basename(experiment_folder_path)
-    results_folder_path = results_folder + '/' + experiment_name
-    label_str = '_' + '_'.join(labels) if labels else ""
-    data_file_name = "class_data_" + experiment_name + label_str + ".txt"
-    data_file_path = os.path.join(results_folder_path + '/', data_file_name)
 
-    with open(data_file_path, 'w') as dat_file:
-        #dat_file.write("$BEGINDATA\n")  # Add BEGINDATA line for further analysis (OpenShapeOut)
-
-        headers=['img_name', 'label', 'confidence']#headers = ['img_name', 'timestamp', 'n', 'area_pix', 'defor', 'cx_pix', 'cw_pix', 'ch_pix', 'perim_pix','mean_pix', 'stdev_pix', 'label']
+def save_classification_data(output_data_file_path, inference_results, labels=False):    
+    with open(output_data_file_path, 'w') as dat_file:
+        headers=['img_name', 'img_class', 'confidence']
         write_to_file(dat_file, headers)
-        for cell in tqdm(inference_results, desc='Saving image data'):
-            '''
-            match = re.search(r'(\d{6})', cell['image_name'])
-            n = cell['image_name'].split('-')[-1] if '-' in cell['image_name'] else "n.tif"
-            img_name = match.group(1)+"-" + n if match else cell['image_name']
-            '''
+        for cell in tqdm(inference_results, desc='Saving classification data'):
             img_name=img_name = cell['image_name'][-12:]
             label = cell['label']
             confidence = cell['confidence']
             data_elements = [img_name, label, f"{confidence:.4f}"]
             write_to_file(dat_file, data_elements)
+    print("\n Cassification data saved!")
+    
+def sort_class_images_from_zip(input_zip_path, classification_df, output_folder,img_column_name="img_name", class_column_name="img_class", n_img=1000):
+# Function reads images from zip file and sorts them to separate class zip files 
+# input_zip_path: where are the images to be extracted
+# classification_df: dataframe with info about which image belongs to which class in columns "img_name" and "img_class"
+# output_folder: folder where the sorted zip files will be saved
+# n_img: number of images per class to extract
+    os.makedirs(output_folder, exist_ok=True)
+    with zipfile.ZipFile(input_zip_path, 'r') as input_zip:
+        
+        # Organize images by class
+        class_dict = defaultdict(list)
+        for _, row in classification_df.iterrows():
+            img_name, img_class = row[img_column_name], row[class_column_name]
+            if img_name in input_zip.namelist():
+                class_dict[img_class].append(img_name)
+        
+        # Create separate zip files for each class
+        for img_class, img_list in class_dict.items():
+            random.shuffle(img_list)  # Shuffle images
+            selected_images = img_list[:min(n_img,len(img_list))]  # Select up to n random images
+            class_zip_path = os.path.join(output_folder, f"{img_class}.zip")
+            
+            with zipfile.ZipFile(class_zip_path, 'w') as class_zip:
+                for img_name in selected_images:
+                    with input_zip.open(img_name) as img_file:
+                        img_data = img_file.read()
+                        class_zip.writestr(img_name, img_data)
+            print(f"Saved {len(selected_images)} images to {class_zip_path}")    
