@@ -52,7 +52,7 @@ For us, this process worked well:
 If you won't use `dc_tools.py`, you can skip installing `dclab`.  
 If you won't use `ml_tools.py`, you can skip `torch` and `torchvision`.  
 
-The versions that worked for us:
+If installing current versions of packages doesn't work, try the versions that worked for us:
 ```
 numpy         2.2.6
 opencv-python 4.11.0.86

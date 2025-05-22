@@ -2,49 +2,42 @@
 
 Some additional info for the module `ml_tools.py`.
 
-### Dependencies and 
-
-To use this project, you need the following Python packages:  
-`numpy` >=1.21.0
-`pandas`
-`matplotlib` >=3.7.1
-`torch` >=2.0.1
-`torchvision` >=0.8.0
-`opencv-python` >=4.8.0
-`tqdm`
-`Pillow`
-`ipykernel` >=6.25.0
-`scikit-learn`
-`seaborn`
-`h5py`
-  
-
-pip install opencv-python
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
-pip install dclab
-pip install tqdm
-pip install matplotlib
-pip install scikit-learn
-pip install seaborn
-
-
-
-pip install torch==2.0.1 torchvision==0.8.0 --index-url https://download.pytorch.org/whl/cu121
-
-https://pytorch.org/get-started/locally/
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
-
-
 ### Overview
-The `ml_tools.py` module is designed to streamline the process of image classification in flow cytometry and other biological research. The key functionalities include:
-1. Image Processing: Image processing and augmentation techniques before training
-2. Model Training: Train a modified ResNet18 model with user-defined hyperparameters
-3. Classification: Use the trained model to classify images and save the results. 
+The `ml_tools.py` module is designed to streamline the process of image classification in flow cytometry and other biological research. The key two functionalities are:
+1. Model Training: Train a modified ResNet18 model with user provided training set.
+2. Classification: Use the trained model to classify images and save the results. 
 
-TrainingSet.zip
-├── class1/
-│   ├── image001.tif
-│   ├── image002.tif
+**Notes:** 
+- The images in the training and sample sets don't need to be of the same size, but if you preprocess the images in the training set, you need to apply the same preprocess to the images in the sample set you want to classify.
+- See `ml_tools_example_script.py` in the `scripts` folder for the usage example.
+
+## 1. Model Training
+`train_model(training_set_path, output_model_folder)`
+
+The `train_model` function in `ml_tools.py` handles the training of the cell classification model. It processes training set images stored in a ZIP file, trains the model, and saves the trained model along with performance metrics into `output_model_folder`. 
+
+The function runs fine as it is, but the user can also change the following parameters to fine-tune the training:
+
+- `EPOCHS`: Number of complete passes (epochs) through the training dataset.
+- `BATCH_SIZE`: Refers to the number of training examples processed before the model updates its parameters.
+- `VALIDATION_SPLIT`: Defines the percentage of data used for validation.
+- `PATIENCE_TOTAL`: Halts training if validation loss does not improve.
+- `LEARNING_RATE`: Determines the step size at each iteration while optimizing the loss function.
+- `WEIGHT_DECAY`: Reduces overfitting by preventing complex models.
+- `DROPOUT_PROB`: Dropout probability, regularizes the model to prevent overfitting.
+
+
+**Notes:** 
+- It is highly recommended that the training is run on a GPU. In theory you can run it on CPU, but it will be very slow. 
+
+ ### Input data: Training set 
+The training set has to be stored in a single ZIP file, with the images sorted into folders having names of the classes:
+
+```
+TrainingSet.zip  
+├── class1/  
+│   ├── image001.tif  
+│   ├── image002.tif  
 │   └── ...
 ├── class2/
 │   ├── image001.tif
@@ -55,34 +48,38 @@ TrainingSet.zip
 │   ├── image002.tif
 │   └── ...
 └── ...
+```
+
+### Output data:
+The trained model and some performance metrics are stored into `output_model_folder`.
+
+- The filename of the final model (e.g., the model trained after the last training pass - epoch ) will have the structure "ml_model_{date}_classes_{classes}.pt", where {date} is the current date, and {classes} are the names of the classes inferred from the ZIP file, e.g.,   
+    `ml_model_2025_05_25_classes_class1_class2_class3_class4.pt` 
+- The perfomache metrics include
+    - the data and figure of the confusion matrix
+    - the data and figures for the performance of each class as well as overal performance
+    - the models and performance after each epoch are also included in separate folders
+
+**Notes:** 
+- You can later change the first part of the model filename, but you should keep the classes part as it is. For example:  
+`my_model_classes_class1_class2_class3_class4.pt`  
+This is because the subsequent classification then inferes the classes names and their order from the model filename. 
+
+## 2. Classification (inference)
+`classify_images(sample_images_path, model_path, output_data_file_path)`
+
+The `classify_images` function in `ml_tools.py` allows users to perform classification of the experimental sample images using a pre-trained model. It reads the images from the ZIP file specified in the `sample_images_path`, runs inference using the pre-trained model specified in the `model_path` and saves the result of classification into a `tsv` `txt` file specified in the `output_data_file_path`. The result file is a table with three columns:  "img_name", "img_class" and "confidence". 
 
 
-### Functions
+**Notes:**
+- Classification runs much faster on a GPU, but with some patience you can do it also on a CPU.
+- Images in the `sample_images_path` have to be preprocessed in the same way as the images from the training set. 
 
-## Model Training
-`train_model(image_folder_path, results_folder)`
+## 3. Additional useful functions
+- Once you classify your images using `classify_images` you might want to see the result of classification, that is to extract and sort the images from the experimental sample according to their classes. For this you can use function `sort_class_images_from_zip(sample_images_path, classification_df, output_folder)` from  `ml_tools.py`.
 
-**Description:** The `train_model` function in `ml_tools.py` handles the training of the cell classification model. It processes images, trains the model, and saves the trained model along with performance metrics. 
-A detailed tutorial for model training is included in the /docs subdirectory.
-Parameters:
-The train_model function includes several key parameters that can be modified for fine-tuning:
-- `Validation Split (val_split)`: Defines the percentage of data used for validation.
-- `Batch Size (batch_size`: Refers to the number of training examples processed before the model updates its parameters.
-- `Epochs (epochs)`: Number of complete passes through the training dataset.
-- `Early Stopping Patience (patience_total)`: Halts training if validation loss does not improve.
-- `Learning Rate (lr)`: Determines the step size at each iteration while optimizing the loss function.
-- `Weight Decay (weight_decay)`: Reduces overfitting by preventing complex models.
-- `Dropout Probability (dropout_prob)`: Regularizes the model to prevent overfitting.
-
-## Inference
-`inference(image_folder, results_folder, model, labels, device)`
-**Description:** The `inference` function in `ml_tools.py` allow users to perform image classification using a pre-trained model. It processes images, runs inference to predict class labels, and saves classified images and performance metrics.<br>
-Parameters:
-- `doublechannel`: Set to True if processing doublechannel images. This activates background subtraction during segmentation.
-- `extra_pixels`: Defines additional padding around objects during segmentation.
-
-
-
+    It reads the images from the ZIP file specified in the `sample_images_path`, and saves them in separate ZIP files into `output_folder` according to their classes. The classification data has to be provided as a dataframe in `classification_df`. See `ml_tools_example_script.py` in the `scripts` folder for the usage example.
+    
 
 ## Conclusion
 The `ml_tools.py` module provides a comprehensive framework for cell image classification. By following the provided instructions, users can effectively train models and classify images to support their research needs. Adjusting the parameters allows for fine-tuning the model to specific datasets, enhancing performance and accuracy.

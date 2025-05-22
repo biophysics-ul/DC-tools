@@ -31,7 +31,15 @@ from collections import defaultdict
 
 
 IMG_EXT=".tif"
+
+# parameters for train_model
 EPOCHS = 30
+BATCH_SIZE=64
+VALIDATION_SPLIT=0.8
+PATIENCE_TOTAL=100
+LEARNING_RATE=1e-3
+WEIGHT_DECAY=1e-5
+DROPOUT_PROB=0.3
 
 class DataTransforms:
     def __init__(self, image_folder_path, batch_size =64, num_workers=0):
@@ -322,11 +330,11 @@ def get_labels(image_folder_path):
 
 def train_model(image_folder_path, results_folder):
     # Validation split (0.5-1)
-    val_split = 0.8
-    batch_size  = 64
+    val_split = VALIDATION_SPLIT 
+    batch_size  = BATCH_SIZE
     epochs = EPOCHS
     # Patience for early stopping
-    patience_total = 100
+    patience_total = PATIENCE_TOTAL 
     model_choice = "resnet"
     # Do you want to train the whole model, or just the final classifier?
     train_whole_model = True
@@ -410,7 +418,7 @@ def train_model(image_folder_path, results_folder):
 
     # Define loss function, optimizer and epochs
     loss_fn = nn.CrossEntropyLoss(weight=weight_tensor)
-    optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
+    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
     scheduler = ReduceLROnPlateau(optimizer, 'min', patience=3, factor=0.2)
 
     # Compute mean and std using DataTransforms class
@@ -569,7 +577,7 @@ def train_model(image_folder_path, results_folder):
 
     plt.tight_layout()
     plt.subplots_adjust(hspace=0.5)
-    plot_name_lab = f"{model_name}_label_performance.png"
+    plot_name_lab = f"{model_name}_class_performance.png"
     plt.savefig(results_folder_path + '/' + plot_name_lab)
     plt.show()
 
@@ -611,7 +619,7 @@ class CustomClassifierVGG16(nn.Module):
 
 # Top layers (classifier) for our ResNet model
 class CustomClassifierResNet(nn.Module):
-    def __init__(self, num_classes, noise_std=0.1, dropout_prob=0.3):
+    def __init__(self, num_classes, noise_std=0.1, dropout_prob=DROPOUT_PROB):
         super(CustomClassifierResNet, self).__init__()
         # Flatten layer
         self.flatten = nn.Flatten()
@@ -758,16 +766,16 @@ def write_confusion_matrices_to_file(results_folder_path, model_name, confusion_
 3. Inference
 '''
 
-def classify_images(input_image_folder, model_path, output_data_file_path):
+def classify_images(sample_images_path, model_path, output_data_file_path):
     # Create dataset and dataloader
     # Compute mean and std using DataTransforms class
     
     model, labels, device = load_model(model_path)
     
-    data_transforms_instance = DataTransforms(input_image_folder)
+    data_transforms_instance = DataTransforms(sample_images_path)
     data_transforms = data_transforms_instance.get_transforms(train_ok=False)
     
-    unlabeled_dataset = UnlabeledImages(input_image_folder, transform = data_transforms['eval'])
+    unlabeled_dataset = UnlabeledImages(sample_images_path, transform = data_transforms['eval'])
     unlabeled_dataloader = DataLoader(unlabeled_dataset, batch_size  = 64, collate_fn=custom_collate)
     
     ###Inference###
@@ -810,14 +818,14 @@ def save_classification_data(output_data_file_path, inference_results, labels=Fa
             write_to_file(dat_file, data_elements)
     print("\n Cassification data saved!")
     
-def sort_class_images_from_zip(input_zip_path, classification_df, output_folder,img_column_name="img_name", class_column_name="img_class", n_img=1000):
+def sort_class_images_from_zip(sample_images_path, classification_df, output_folder,img_column_name="img_name", class_column_name="img_class", n_img=1000):
 # Function reads images from zip file and sorts them to separate class zip files 
 # input_zip_path: where are the images to be extracted
 # classification_df: dataframe with info about which image belongs to which class in columns "img_name" and "img_class"
 # output_folder: folder where the sorted zip files will be saved
 # n_img: number of images per class to extract
     os.makedirs(output_folder, exist_ok=True)
-    with zipfile.ZipFile(input_zip_path, 'r') as input_zip:
+    with zipfile.ZipFile(sample_images_path, 'r') as input_zip:
         
         # Organize images by class
         class_dict = defaultdict(list)
