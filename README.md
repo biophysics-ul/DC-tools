@@ -17,7 +17,7 @@ Some useful scripts and examples are in the folder `scripts`:
 - `rtdc_ImageViewer`: Script for previewing images in RTDC files 
 - `zip_ImageViewer`: Script for previewing images in ZIP files
 - `ml_tools_example_script`: Script with a complete ML workflow example (model training & image classification)
-- `rtcd_tools_example_script`: Script with examples of how to work with rtdc files (e.g., extract data from or add class data to a rtdc file)
+- `rtdc_tools_example_script`: Script with examples of how to work with rtdc files (e.g., extract data from or add class data to a rtdc file)
 
 ## Usage
 
