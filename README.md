@@ -8,8 +8,8 @@ The repository contains two main modules in the folder `modules`and some useful 
 This module provides functions for working with and analyzing DC images. It supports images stored in the RTDC file format or in ZIP files. For the RTDC format, it uses [**dclab**](https://github.com/DC-analysis/dclab).
 
 ### 2. Module `ml_tools.py`
-This module offers functions for ML-based model training and image classification.  
-It is **independent of DC** (and `dc_tools.py`) and works with any images stored in ZIP files.  
+This module provides functions for simple ML-based model training and image classification.  
+It is **independent of DC** (and `rtdc_tools.py`) and works with any images stored in ZIP files.  
 Machine learning is based on PyTorch and can utilize a GPU. To use GPU acceleration, make sure CUDA is installed and properly configured.
 
 ### 3. Useful scripts
@@ -21,7 +21,7 @@ Some useful scripts and examples are in the folder `scripts`:
 ## Usage
 
 - Install the required packages (see below)
-- Download the files, make sure the modules are in the same folder as your script, and you're ready to go!
+- Download the files, put the modules and scripts in the same folder on your computer, and you're ready to go!
 
 Additional information about the modules is available in the module-specific README files:
 - [README.rtdc_tools](/modules/README.rtdc_tools.md)
@@ -32,8 +32,6 @@ Additional information about the scripts is included in the scripts themselves.
 
 
 ## Installation
-
-For us, this process worked well:
 
 - Create a new Python environment  
 - Go to [https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/locally/), select your system configuration, copy the installation command, and run it in your console  
