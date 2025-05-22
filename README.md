@@ -4,8 +4,8 @@ Custom Python tools for Deformability Cytometry (DC), developed at the Institute
 These tools are designed for reusability rather than speed.  
 The repository contains two main modules and some useful scripts:
 
-### 1. Module `dc_tools.py`
-This module provides functions for working with and analyzing DC images. It supports images stored in ZIP files or in the RTDC format. For the latter, it uses [**dclab**](https://github.com/DC-analysis/dclab).
+### 1. Module `rtdc_tools.py`
+This module provides functions for working with and analyzing DC images. It supports images stored in the RTDC file format or in ZIP files. For the RTDC format, it uses [**dclab**](https://github.com/DC-analysis/dclab).
 
 ### 2. Module `ml_tools.py`
 This module offers functions for ML-based model training and image classification.  
@@ -14,7 +14,7 @@ Machine learning is based on PyTorch and can utilize a GPU. To use GPU accelerat
 
 ### 3. Useful scripts
 Some useful scripts and examples are in the `Scripts` folder:
-- `rtdc_ImageViewer`: Script for previewing images in RTDC files
+- `rtdc_ImageViewer`: Script for previewing images in RTDC files 
 - `zip_ImageViewer`: Script for previewing images in ZIP files
 - `ml_tools_example_script`: Script with a complete ML workflow example (model training & image classification)
 
@@ -24,7 +24,7 @@ Some useful scripts and examples are in the `Scripts` folder:
 - Download the files, make sure the modules are in the same folder as your script, and you're ready to go!
 
 Additional information about the modules is available in the module-specific README files:
-- [README.dc_tools](README.dc_tools.md)
+- [README.rtdc_tools](README.rtdc_tools.md)
 - [README.ml_tools](README.ml_tools.md)
 
 Additional information about the scripts is included in the scripts themselves.
@@ -49,7 +49,7 @@ For us, this process worked well:
     pip install numpy opencv-python dclab tqdm matplotlib scikit-learn seaborn
 ```
 
-If you won't use `dc_tools.py`, you can skip installing `dclab`.  
+If you won't use `rtdc_tools.py`, you can skip installing `dclab`.  
 If you won't use `ml_tools.py`, you can skip `torch` and `torchvision`.  
 
 If installing current versions of packages doesn't work, try the versions that worked for us:
