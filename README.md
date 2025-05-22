@@ -2,7 +2,7 @@
 
 Custom Python tools for Deformability Cytometry (DC), developed at the Institute of Biophysics, Faculty of Medicine, University of Ljubljana.  
 These tools are designed for reusability rather than speed.  
-The repository contains two main modules and some useful scripts:
+The repository contains two main modules in the folder `modules`and some useful scripts in the folder `scripts`:
 
 ### 1. Module `rtdc_tools.py`
 This module provides functions for working with and analyzing DC images. It supports images stored in the RTDC file format or in ZIP files. For the RTDC format, it uses [**dclab**](https://github.com/DC-analysis/dclab).
@@ -13,7 +13,7 @@ It is **independent of DC** (and `dc_tools.py`) and works with any images stored
 Machine learning is based on PyTorch and can utilize a GPU. To use GPU acceleration, make sure CUDA is installed and properly configured.
 
 ### 3. Useful scripts
-Some useful scripts and examples are in the `Scripts` folder:
+Some useful scripts and examples are in the folder `scripts`:
 - `rtdc_ImageViewer`: Script for previewing images in RTDC files 
 - `zip_ImageViewer`: Script for previewing images in ZIP files
 - `ml_tools_example_script`: Script with a complete ML workflow example (model training & image classification)
@@ -24,8 +24,8 @@ Some useful scripts and examples are in the `Scripts` folder:
 - Download the files, make sure the modules are in the same folder as your script, and you're ready to go!
 
 Additional information about the modules is available in the module-specific README files:
-- [README.rtdc_tools](README.rtdc_tools.md)
-- [README.ml_tools](README.ml_tools.md)
+- [README.rtdc_tools](/modules/README.rtdc_tools.md)
+- [README.ml_tools](/modules/README.ml_tools.md)
 
 Additional information about the scripts is included in the scripts themselves.
 
