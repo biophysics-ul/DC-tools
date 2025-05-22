@@ -23,27 +23,30 @@ import os
 
 IMG_EXT=".png" # the extension of the images in the zip file
 
-def get_img_diff(img1, img2, background_subtraction_shift = 100):
+def get_img_diff(img1, img2, background_subtraction_shift =128):
     img_subtracted=(img1.astype(np.int32) + background_subtraction_shift - img2).astype(np.uint8)      
     return img_subtracted
 
 
-def extract_features_from_analyzed_rtdc_to_tsv(rtdc_path,tsv_path):
+def extract_features_from_rtdc_to_tsv(rtdc_path,tsv_path):
 # reads a rtdc file and saves all scalar features into a tsv file    
-    ds = dclab.new_dataset(rtdc_path)
-    features = ds.features
-    print("All features: ",features)    
-    scalar_features = ds.features_scalar
-    print("Scalar features: ",scalar_features)
-    data = {f: np.asarray(ds[f]) for f in scalar_features}    
-    df = pd.DataFrame(data)
-    df.to_csv(tsv_path, sep="\t", index=False)
-    print(f"Scalar features saved to {tsv_path}")
+    with dclab.new_dataset(rtdc_path) as ds:
+        ds = dclab.new_dataset(rtdc_path)
+        features = ds.features
+        print("All features: ",features)    
+        scalar_features = ds.features_scalar
+        print("Scalar features: ",scalar_features)
+        print("Extraction started...")
+        data = {f: np.asarray(ds[f]) for f in scalar_features}    
+        df = pd.DataFrame(data)
+        df.to_csv(tsv_path, sep="\t", index=False)
+        print(f"Scalar features saved to {tsv_path}")
+        
     
-    
-def extract_images_from_analyzed_rtdc_to_zip(rtdc_path,zip_path,subtract=True,extra_pixels=20,img_index_to_break=1000000):
+def extract_images_from_rtdc_to_zip(rtdc_path,zip_path,subtract=True,extra_pixels=20,img_index_to_break=1000000):
 # extracts images from a rtdc file - image filenames will be of the form: frame-event_index.IMG_EXT
-# the rtdc file has to contain data on images, their contours and backgrounds 
+# the rtdc file has to contain images
+# if rtdc contains event contours, it will extract only events, otherwise it will extract the whole images
 # subtract flag: if the background image should be subtracted from the image
 # extra_pixels: how many pixels to add to the left and right of the contour
 # img_index_to_break: how many images to extract (for testing purposes) 
@@ -54,19 +57,25 @@ def extract_images_from_analyzed_rtdc_to_zip(rtdc_path,zip_path,subtract=True,ex
             
         (img_h,img_w)=ds["image"][0].shape
         
-        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_STORED, allowZip64=True) as zipf:
+        contour_flag = "contour" in ds.features
+        if "image" not in ds.features:
+            print("rtdc file does not contain images! I did nothing.")
+            return
 
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_STORED, allowZip64=True) as zipf:
+            print(f"Extracting images from rtdc to zip, countours={contour_flag}.")
             for i in tqdm(range(len(ds))):
                 
-                img=ds["image"][i]
-                img_bg=ds["image_bg"][i]
-                if subtract:
-                    img=get_img_diff(img, img_bg)
+                img=ds["image"][i]                
                 
-                x_contour_points=ds["contour"][i][:,0]  
-                x_min=max(0,min(x_contour_points)-extra_pixels)
-                x_max=min(img_w,max(x_contour_points)+extra_pixels)  
-                img=img[:, x_min:x_max]
+                if contour_flag:
+                    img_bg=ds["image_bg"][i]
+                    if subtract:
+                        img=get_img_diff(img, img_bg)
+                    x_contour_points=ds["contour"][i][:,0]  
+                    x_min=max(0,min(x_contour_points)-extra_pixels)
+                    x_max=min(img_w,max(x_contour_points)+extra_pixels)  
+                    img=img[:, x_min:x_max]
                 
                 frame_index=ds["frame"][i]            
                 if frame_index==frame_index_previous:
@@ -81,27 +90,39 @@ def extract_images_from_analyzed_rtdc_to_zip(rtdc_path,zip_path,subtract=True,ex
                 
                 if i>=img_index_to_break:break  
                
-def add_features_to_rtdc(input_rtdc_path,feature_dataframe):
+def add_class_data_to_rtdc(input_rtdc_path,df_classes):
+    # df classes has to be one column pandas dataframe with classes denoted wiht integer values (1,2,3...)
+    # the length of df should be equal to the lenght of rtdc
     foldername = os.path.dirname(input_rtdc_path)
     basefilename, extension = os.path.splitext(os.path.basename(input_rtdc_path))
-    output_rtdc_path = os.path.join(foldername, basefilename + "_with_features" + extension)
+    output_rtdc_path = os.path.join(foldername, basefilename + "_with_classes" + extension)
+    class_array= df_classes.to_numpy().flatten()
+    
     with (dclab.new_dataset(input_rtdc_path) as ds,
-        dclab.RTDCWriter(output_rtdc_path) as hw):
+          dclab.RTDCWriter(output_rtdc_path,mode='reset') as hw):
+        if len(ds)!=len(class_array):
+            print("Class info length is not the same as the RTDC lengt")
         # `ds` is the basin
         # `hw` is the referrer
-
+    
         # First of all, we have to copy the metadata from the input file
         # to the output file. If we forget to do this, then dclab will
         # not be able to open the output file.
         hw.store_metadata(ds.config.as_dict(pop_filtering=True))
-
+    
         # Next, we can compute and write the new feature to the output file.
-        hw.store_feature("userdef1", np.random.random(len(ds)))
-
+        hw.store_feature("userdef1", class_array)
+    
         # Finally, we write the basin information to the output file.
         hw.store_basin(
-            basin_name="raw data",
+            basin_name="class data",
             basin_type="file",
             basin_format="hdf5",
-            basin_locs=["input.rtdc"],
+            basin_locs=[input_rtdc_path],
         )
+    
+    # You can now open the output file and verify that everything worked.
+    with dclab.new_dataset(output_rtdc_path) as ds_out:
+        assert "userdef1" in ds_out, "check that the feature we wrote is there"
+        assert "image" in ds_out, "check that we can access basin features"
+        print(f"New RTDC file saved with {len(ds_out)} events: {output_rtdc_path}")

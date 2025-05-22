@@ -1,19 +1,26 @@
-# dc_tools
+# rtdc_tools
 
-Some additional info for the module `dc_tools.py`.
+This module provides some useful functions for working with rtdc files. 
 
-### Dependencies
+For the usage of this functions, see `rtdc_tools_example_script.py` in the `scripts` folder.
 
-To use this project, you need the following Python packages:  
-`OpenCV` >=4.0  
-`dclab` (only if you work with RTDC files)
 
 ### Functions
 
-`extract_events_from_raw_rtdc_to_zip(rtdc_path, zip_path, mode)`
+`extract_features_from_rtdc_to_tsv(rtdc_path,tsv_path)`
 
-**Description:** Extracts images with events and their timestamps from a raw (non-filtered) RTDC file into a ZIP archive. Images with events are those that, after background subtraction, have a signal-to-noise ratio (SNR) above a predefined threshold.
+This function saves all scalar features from a rtdc file into a tsv file. The rtdc file can be a rtdc file reffering to a basin (e.g., rtdc produced with ChipStream). 
 
-The user can choose if the extracted images are a) original images with events, b) images with subtracted background or c) concatenated images, with the original image on top and the background image below (mode=original,subtracted,concatenated).
+`extract_images_from_rtdc_to_zip(rtdc_path,zip_path)`
+
+This function saves images from a rtdc file into a zip file. 
+
+If the rtdc file contains "contours", the function extracts only "contoured events". You can set optional parameter extra_pixels to set the number of pixels on the left/right of each contoured event to keep in the extracted image. If
+
+By default, it extracts images of "contoured events" with subtracted backgrounds. Set optional parameter to "subtract=False" to extract non-subtracted images.
+
+`add_class_data_to_rtdc(input_rtdc_path,df_classes)`
+
+This function reads an existing rtdc file defined in `input_rtdc_path`, uses the data stored in `df_classes` to create a new feature named "userdef1" and saves it into a new rtdc file (with added "_with_classes" to the filename). `df_classes` has to be a pandas dataframe with only one column containing integer numbers describing classes. The new rtdc file will reffer to the original rtdc. You can use the new rtdc file normally with CytoPlot.
 
 
