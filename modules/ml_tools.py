@@ -217,7 +217,8 @@ def load_model(model_path=None):
         model_path = filedialog.askopenfilename(title="Please select the model you would like to use.")
         root.destroy()
 
-    model_name = os.path.basename(model_path)
+    model_name = os.path.splitext(os.path.basename(model_path))[0]
+    
 
     # CUDA check
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -321,7 +322,6 @@ def get_labels(image_folder_path):
                     labels.append(directory)
     else:
         labels = [d for d in os.listdir(image_folder_path) if os.path.isdir(os.path.join(image_folder_path, d))]
-    print("Labels:", labels)
     return labels
 
 '''
@@ -339,12 +339,13 @@ def train_model(image_folder_path, results_folder):
     # Do you want to train the whole model, or just the final classifier?
     train_whole_model = True
 
-    
     current_date = datetime.datetime.now()
     date_str = current_date.strftime("%Y_%m_%d")
     sorted_labels = get_labels(image_folder_path)#sorted(get_labels(image_folder_path))
+    print("Training started.")
+    print("Labels:",sorted_labels)
     label_str = '_'.join(sorted_labels)
-    model_name = f"ml_model_{date_str}_classes_{label_str}"
+    model_name = f"ml_model_classes_{label_str}"
     results_folder_path = results_folder + '/Models/' + model_name
 
     if not os.path.exists(results_folder_path):
@@ -359,7 +360,7 @@ def train_model(image_folder_path, results_folder):
         print('Cuda is not available. Program will run on CPU, \nso performance will be much slower.')
 
     num_classes = len(sorted_labels)  # needed by CustomClassifier
-
+    print("Number of classes:",num_classes)
     # Construct model + custom classifier
     if model_choice == "resnet":
         base_model = models.resnet18(weights=None)  # weights = "ResNet18_Weights.IMAGENET1K_V1"
@@ -769,9 +770,9 @@ def write_confusion_matrices_to_file(results_folder_path, model_name, confusion_
 def classify_images(sample_images_path, model_path, output_data_file_path):
     # Create dataset and dataloader
     # Compute mean and std using DataTransforms class
-    
+    print("Classification started.")
     model, labels, device = load_model(model_path)
-    
+        
     data_transforms_instance = DataTransforms(sample_images_path)
     data_transforms = data_transforms_instance.get_transforms(train_ok=False)
     
@@ -805,7 +806,6 @@ def classify_images(sample_images_path, model_path, output_data_file_path):
 
     save_classification_data(output_data_file_path,inference_results, labels)
 
-
 def save_classification_data(output_data_file_path, inference_results, labels=False):    
     with open(output_data_file_path, 'w') as dat_file:
         headers=['img_name', 'img_class', 'confidence']
@@ -816,7 +816,7 @@ def save_classification_data(output_data_file_path, inference_results, labels=Fa
             confidence = cell['confidence']
             data_elements = [img_name, label, f"{confidence:.4f}"]
             write_to_file(dat_file, data_elements)
-    print("\n Cassification data saved!")
+    print("Cassification data saved!\n")
     
 def sort_class_images_from_zip(sample_images_path, classification_df, output_folder,img_column_name="img_name", class_column_name="img_class", n_img=1000):
 # Function reads images from zip file and sorts them to separate class zip files 
@@ -825,6 +825,7 @@ def sort_class_images_from_zip(sample_images_path, classification_df, output_fol
 # output_folder: folder where the sorted zip files will be saved
 # n_img: number of images per class to extract
     os.makedirs(output_folder, exist_ok=True)
+    print("Sorting of images started.")
     with zipfile.ZipFile(sample_images_path, 'r') as input_zip:
         
         # Organize images by class
@@ -846,3 +847,4 @@ def sort_class_images_from_zip(sample_images_path, classification_df, output_fol
                         img_data = img_file.read()
                         class_zip.writestr(img_name, img_data)
             print(f"Saved {len(selected_images)} images to {class_zip_path}")    
+    print("Sorting completed.\n")
