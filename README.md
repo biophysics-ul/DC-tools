@@ -1,15 +1,15 @@
 # DC-tools
 
-Custom Python tools for Deformability Cytometry (DC), developed at the Institute of Biophysics, Faculty of Medicine, University of Ljubljana.  
+Custom Python tools for Deformability Cytometry (DC).  
 These tools are designed for reusability rather than speed.  
-The repository contains two main modules in the folder `modules`and some useful scripts in the folder `scripts`:
+The repository contains two main modules in the folder `modules`and some useful scripts in the folder `scripts`.
 
 ### 1. Module `rtdc_tools.py`
-This module provides functions for working with and analyzing DC images. It supports images stored in the RTDC file format or in ZIP files. For the RTDC format, it uses [**dclab**](https://github.com/DC-analysis/dclab).
+This module provides functions for working with DC images. It supports images stored in the RTDC file format or in ZIP files. RTDC is the standard file format for deformability cytometry (see [**dclab**](https://github.com/DC-analysis/dclab)).
 
 ### 2. Module `ml_tools.py`
 This module provides functions for simple ML-based model training and image classification.  
-It is **independent of DC** (and `rtdc_tools.py`) and works with any images stored in ZIP files.  
+It is independent of DC (and `rtdc_tools.py`) and works with any images stored in ZIP files.  
 Machine learning is based on PyTorch and can utilize a GPU. To use GPU acceleration, make sure CUDA is installed and properly configured.
 
 ### 3. Useful scripts
@@ -17,12 +17,12 @@ Some useful scripts and examples are in the folder `scripts`:
 - `rtdc_ImageViewer`: Script for previewing images in RTDC files 
 - `zip_ImageViewer`: Script for previewing images in ZIP files
 - `ml_tools_example_script`: Script with a complete ML workflow example (model training & image classification)
-- `rtdc_tools_example_script`: Script with examples of how to work with rtdc files (e.g., extract data from or add class data to a rtdc file)
+- `rtdc_tools_example_script`: Script with examples of how to work with RTDC files (e.g., extract data, add class info ...)
 
 ## Usage
 
 - Install the required packages (see below)
-- Download the files, put the modules and scripts in the same folder on your computer, and you're ready to go!
+- Download the files, place the modules and scripts in the same folder on your computer, and you're ready to go!
 
 Additional information about the modules is available in the module-specific README files:
 - [README.rtdc_tools](/modules/README.rtdc_tools.md)
