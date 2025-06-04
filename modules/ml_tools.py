@@ -266,38 +266,6 @@ def custom_collate(batch):
     images = torch.stack(images, 0)
     return images, labels
 
-def check_box_list():
-    root = tkinter.Tk()
-    root.attributes("-topmost", True)
-    root.withdraw()
-    box_list_path = filedialog.askopenfilename(title="Please select the box_list you wish to check.")
-    root.destroy()
-
-    with open(box_list_path, "rb") as file:
-        box_list = pickle.load(file)
-
-    print("Labels: ")
-    print(box_list[-1])  
-
-    label_counts = {}
-
-    print("Cells: ")
-    printed_cells_count = 0
-    for box in box_list[:-1]:  # Process all boxes except the last item (assumed to be the labels list)
-    # Increment the count for the current label in the dictionary
-            label_counts[box['label']] = label_counts.get(box['label'], 0) + 1
-
-    # Print details only for the first 5 elements
-    if printed_cells_count < 5:
-            print(box['cell_name'] + '      ' + box['label'])
-            printed_cells_count += 1
-
-    print('Number of cells: ' + str(len(box_list[:-1])))
-
-    # Print the counts for each label
-    for label, count in label_counts.items():
-            print(f"{label}: {count}")
-
 def choose_image_folder():
     root = tkinter.Tk()
     root.attributes("-topmost", True)
